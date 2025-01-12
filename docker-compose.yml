@@ -1,0 +1,69 @@
+version: "3.8"
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: my_database
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - gx_network
+
+  gx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gx
+    ports:
+      - "8081:8081"  # Great Expectations Web UI
+      - "8000:8000"  # Great Expectations API
+    depends_on:
+      - mysql
+    environment:
+      MYSQL_CONNECTION_STRING: "mysql+pymysql://root:password@mysql:3306/my_database"
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: password
+      DB_NAME: my_database
+    volumes:
+      - ./great_expectations:/app/great_expectations  # For persistent GX data
+      - ./scripts:/app/scripts  # Custom setup scripts
+    entrypoint: ["/app/scripts/gx-entrypoint.sh"]
+    networks:
+      - gx_network
+
+  airflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: airflow
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "mysql+pymysql://root:password@mysql:3306/my_database"
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: password
+      DB_NAME: my_database
+    ports:
+      - "8080:8080"  # Airflow Web UI
+    volumes:
+      - ./airflow/dags:/usr/local/airflow/dags
+      - ./airflow/logs:/usr/local/airflow/logs
+      - ./airflow/plugins:/usr/local/airflow/plugins
+    entrypoint: ["/app/scripts/airflow-entrypoint.sh"]
+
+    networks:
+      - gx_network
+
+networks:
+  gx_network:
+    driver: bridge
