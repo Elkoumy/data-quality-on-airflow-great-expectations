@@ -22,8 +22,10 @@ airflow users create \
     --email admin@example.com
 echo "Airflow initialized successfully."
 
+airflow scheduler &
 
-airflow webserver
+
+exec airflow webserver
 
 #exec "$@"
 # Keep the container running indefinitely

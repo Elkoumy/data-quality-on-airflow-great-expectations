@@ -1,5 +1,5 @@
 # Base image
-FROM apache/airflow:2.7.0
+FROM apache/airflow:2.4.0
 
 # Switch to root to install system dependencies
 USER root
@@ -19,9 +19,10 @@ USER airflow
 # Install Python dependencies for both Airflow and Great Expectations
 RUN pip install --no-cache-dir \
     pymysql \
-    great-expectations \
+    great-expectations==0.15.34 \
     apache-airflow-providers-mysql \
-    apache-airflow-providers-http
+    apache-airflow-providers-http \
+    airflow-provider-great-expectations
 
 # Set working directory
 WORKDIR /app
@@ -29,7 +30,7 @@ WORKDIR /app
 # Copy application-specific scripts and configurations
 USER root
 COPY ./scripts /app/scripts
-COPY ./great_expectations /app/great_expectations
+#COPY gx /app/great_expectations
 COPY ./requirements.txt /app/requirements.txt
 
 # Adjust permissions for the entrypoint script

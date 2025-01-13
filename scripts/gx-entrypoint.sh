@@ -8,9 +8,10 @@ done
 echo "MySQL is ready!"
 
 # Initialize Great Expectations if not already done
-if [ ! -f "/app/great_expectations/great_expectations.yml" ]; then
+if [ ! -f "/app/gx/great_expectations.yml" ]; then
     echo "Initializing Great Expectations..."
-    yes Y | great_expectations init
+    great_expectations --assume-yes init
+
 fi
 
 # Run the setup script to configure GX
@@ -21,6 +22,13 @@ else
     exit 1
 fi
 
+# Run the checkpoint script to validate data
+if python /app/scripts/run_checkpoint.py; then
+    echo "Checkpoint executed successfully."
+else
+    echo "Checkpoint execution encountered an error." >&2
+    exit 1
+fi
 
 #exec "$@"
 # Keep the container running indefinitely

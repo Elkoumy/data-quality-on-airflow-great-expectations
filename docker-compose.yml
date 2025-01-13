@@ -32,8 +32,8 @@ services:
       DB_PASSWORD: password
       DB_NAME: my_database
     volumes:
-      - ./great_expectations:/app/great_expectations  # For persistent GX data
-      - ./scripts:/app/scripts  # Custom setup scripts
+      - ./great_expectations:/app/great_expectations
+      - ./scripts:/app/scripts
     entrypoint: ["/app/scripts/gx-entrypoint.sh"]
     networks:
       - gx_network
@@ -56,9 +56,10 @@ services:
     ports:
       - "8080:8080"  # Airflow Web UI
     volumes:
-      - ./airflow/dags:/usr/local/airflow/dags
-      - ./airflow/logs:/usr/local/airflow/logs
-      - ./airflow/plugins:/usr/local/airflow/plugins
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./great_expectations:/app/great_expectations
     entrypoint: ["/app/scripts/airflow-entrypoint.sh"]
 
     networks:
