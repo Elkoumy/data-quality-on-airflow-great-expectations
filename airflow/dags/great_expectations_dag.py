@@ -12,10 +12,15 @@ from great_expectations.core.batch import RuntimeBatchRequest
 GX_CONFIG_PATH = "/app/great_expectations"  # Update as needed
 MYSQL_CONNECTION_STRING = "mysql+pymysql://root:password@mysql:3306/my_database"  # Replace with actual credentials
 
-def validate_data():
+def validate_data_and_generate_docs():
     """
-    Function to validate data using Great Expectations.
+    Function to validate data using Great Expectations and generate Data Docs with statistics.
     """
+    import great_expectations as gx
+    from great_expectations.core.batch import RuntimeBatchRequest
+    from sqlalchemy import create_engine
+    import pandas as pd
+
     # Load Great Expectations context
     context = gx.get_context(context_root_dir=GX_CONFIG_PATH)
 
@@ -60,10 +65,16 @@ def validate_data():
     # Save and build data docs
     context.build_data_docs()
 
+    # Get Data Docs URL
+    data_docs_url = context.get_docs_sites_urls()[0]["site_url"]
+    print(f"Data Docs generated at: {data_docs_url}")
+
     # Log validation results
     if not results["success"]:
-        raise ValueError("Data validation failed!")
+        raise ValueError(f"Data validation failed! See Data Docs for details: {data_docs_url}")
     print("Validation successful!")
+
+
 
 @dag(
     schedule_interval=None,
@@ -78,14 +89,14 @@ def validate_data():
 )
 def great_expectations_validation():
     """
-    Airflow DAG to validate data using a Great Expectations Validator.
+    Airflow DAG to validate data using a Great Expectations Validator and generate Data Docs.
     """
 
     start_task = DummyOperator(task_id="start")
 
     validate_data_task = PythonOperator(
-        task_id="validate_data",
-        python_callable=validate_data,
+        task_id="validate_data_and_generate_docs",
+        python_callable=validate_data_and_generate_docs,
     )
 
     end_task = DummyOperator(task_id="end")
