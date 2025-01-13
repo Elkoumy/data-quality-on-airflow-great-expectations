@@ -1,13 +1,10 @@
 import great_expectations as gx
-from great_expectations.checkpoint import SimpleCheckpoint
 from great_expectations.core.batch import RuntimeBatchRequest
 import pandas as pd
 from sqlalchemy import create_engine
 
-# Load the context
 context = gx.get_context()
 
-# Define the expectation suite
 suite_name = "default_expectation_suite"
 try:
     suite = context.get_expectation_suite(suite_name)
@@ -15,7 +12,7 @@ except gx.exceptions.DataContextError:
     suite = context.create_expectation_suite(suite_name)
 
 # Load data from MySQL into a Pandas DataFrame
-mysql_connection_string = "mysql+pymysql://root:password@mysql:3306/my_database"  # Replace with your actual connection string
+mysql_connection_string = "mysql+pymysql://root:password@mysql:3306/my_database"
 engine = create_engine(mysql_connection_string)
 query = "SELECT * FROM trips"
 batch_data = pd.read_sql(query, con=engine)
@@ -28,7 +25,6 @@ batch_request = RuntimeBatchRequest(
     runtime_parameters={"batch_data": batch_data},  # Pass the DataFrame directly
     batch_identifiers={"default_identifier_name": "batch_001"}  # A unique identifier for this batch
 )
-
 # Get a validator using the RuntimeBatchRequest and the expectation suite
 validator = context.get_validator(
     batch_request=batch_request,
@@ -42,12 +38,9 @@ validator.expect_column_values_to_be_between(column="congestion_surcharge", min_
 
 # Save the expectation suite
 validator.save_expectation_suite()
-
 results = validator.validate()
-
 # Save results and build data docs
 context.build_data_docs()
-
 # Print validation results
 print(results)
 
